@@ -1,0 +1,152 @@
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "refmem.h"
+#include "dold.h"
+
+/*
+typedef struct object object_t;
+
+struct object
+{
+  int ref_count;
+  function1_t destructor;
+};
+
+
+static int size_ref_count = sizeof(unsigned int);
+
+//Unaligned/aligned?? Om structen är 5 bytes allokeras 8 bytes??
+
+//Userland pointer points at the first O (The object)   HHHH_OOOOOOOOOO
+//                                                           ^
+//Internal pointer points at the first H (The header)   HHHH_OOOOOOOOOO
+//                                                      ^
+//Takes an internal pointer to an allocation and returns its userland pointer
+#define allocate_object(p) (((object_t *)p) + 1)
+
+//Takes an userland pointer to an object and returns an internal pointer
+//to the start of the allocation
+#define allocate_header(p) (((object_t *)p) - 1)
+
+
+void retain(void *obj) {
+  if (obj != NULL) {
+    object_t *header = allocate_header(obj);
+    header->ref_count = header->ref_count + 1;
+  }
+}
+
+void release(void *obj) {
+  if (obj != NULL) {
+    object_t *header = allocate_header(obj);
+    int ref_count = header->ref_count;
+    if (ref_count > 1) {
+      header->ref_count = header->ref_count - 1;
+    }
+    else if (ref_count < 1) {
+      printf("Can't decrement the ref_count");
+      deallocate(obj);//Kalla på deallocate??
+    }
+    else {
+      header->ref_count = header->ref_count - 1;
+      deallocate(obj);
+    }
+  }
+}
+
+size_t rc(void *obj) {
+  object_t *header = allocate_header(obj);
+  return header->ref_count; 
+}
+
+
+char *string_duplicate(char *s) {
+  char *string = allocate(strlen(s) + 1, NULL);
+  if (string == NULL) {
+    return NULL;
+  }
+  retain(string);
+  strcpy(string, s);
+  return string;
+}
+
+obj *allocate(size_t bytes, function1_t destructor) {
+  size_t size = bytes + sizeof(destructor) + size_ref_count;
+  object_t *ref_object = malloc(size);
+  memset(ref_object, 0, size);
+
+  ref_object->ref_count = 0;
+  ref_object->destructor = destructor;
+  
+  return (obj *)allocate_object(ref_object); //Användaren behöver bara objektet
+}
+
+obj *allocate_array(size_t elements, size_t elem_size, function1_t destructor) {
+  size_t size = elements*elem_size + sizeof(destructor) + size_ref_count;
+  object_t *ref_object = calloc(1, size);
+  ref_object->ref_count = 0;
+  ref_object->destructor = destructor;
+
+  return (obj *)allocate_object(ref_object);
+}
+
+void free_allocation(void *obj) {
+  object_t *header = allocate_header(obj);
+  free(header);
+}
+
+void deallocate(void *obj) {
+  if (obj != NULL) {
+    object_t *header = allocate_header(obj);
+    if (header->ref_count == 0) {
+      if (header->destructor == NULL) {
+        free_allocation(obj);
+      } else {
+        function1_t fun = header->destructor;
+        fun(obj);
+        free_allocation(obj);
+      }
+    } else {
+      printf("Objektet har fortfarande åtminstone en pekare till sig");
+    }
+  }
+}
+*/
+
+void retain(void *obj) {
+  retain_aux(obj);
+}
+
+void release(void *obj) {
+  release_aux(obj);
+}
+
+size_t rc(void *obj) {
+  return rc_aux(obj);
+}
+
+char *string_duplicate(char *s) {
+  return string_duplicate_aux(s);
+}
+
+obj *allocate(size_t bytes, function1_t destructor) {
+  return allocate_aux(bytes, destructor);
+}
+
+obj *allocate_array(size_t elements, size_t elem_size, function1_t destructor) {
+  return allocate_array_aux(elements, elem_size, destructor);
+}
+
+void deallocate(void *obj) {
+  return deallocate_aux(obj);
+}
+
+void set_cascade_limit(size_t);
+size_t get_cascade_limit();
+void cleanup();
+void shutdown();
+
+
+

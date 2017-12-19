@@ -1,0 +1,26 @@
+CC= gcc
+CFLAGS= -g -c -Wall
+VALGRINDFLAGS= valgrind --leak-check=full -v
+LINKFLAGS= -g
+OBJECTS= refmem.o
+
+refmem.o: refmem.c refmem.h
+	$(CC) $(CFLAGS) refmem.c
+
+clean:
+	rm *.o
+
+valgrind_test: test
+	$(VALGRINDFLAGS) ./test
+
+test: 	refmem.o test.c
+	$(CC) $(LINKFLAGS) -o test test.c refmem.o -lcunit
+
+runtest: test
+	./test
+
+example: refmem.o example.c 
+	 $(CC) $(LINKFLAGS) -o example example.c refmem.o
+
+examplerun: example
+	$(VALGRINDFLAGS) ./example
