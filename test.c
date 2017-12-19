@@ -12,18 +12,22 @@ void test_destructor(obj *test_string) {
 }
 
 //////////////////////////////TEST ALLOCATE//////////////////////////////////
+//FRÅGA GUSTAF PÅ MÖTET 21/12, TESTA STORLEK PÅ ALLOKERINGEN FUNKAR EJ ALLTID 
+//PGA ALLIGNMENT
+
+/*
 void test_allocate_size() {
   char *string = "Test";
   void *object = allocate(sizeof(string), NULL);
   CU_ASSERT_TRUE(sizeof(object) == sizeof(string));
-  deallocate(object);
 }
+*/
 
 void test_allocate_use_correct() {
   char *string = "Test";
-  void *object = allocate(sizeof(string), NULL);
+  char *object = allocate(sizeof(string), NULL);
   object = "Test";
-  CU_ASSERT_TRUE(strcmp((char *) object, "Test") == 0);
+  CU_ASSERT_TRUE(strcmp(object, "Test") == 0);
 }
 
 void test_allocate_refcount() {
@@ -47,18 +51,54 @@ void test_allocate_destructor() {
   CU_ASSERT_TRUE(header->destructor != NULL)
 }
 
-/*
-Optimisering till senare, ska inte kunna använda mer minne än de allokerat
-void test_allocate_use_incorrect() {
-  char *Hej = "Hej";
-  void *object = allocate(sizeof(Hej), NULL);
-  object = "Hejj";
-  CU_ASSERT_FALSE(strcmp((char *) object, "Hejj") == 0);
+/////////////////////////////TEST ALLOCATE_ARRAY//////////////////////////////
+
+//FRÅGA GUSTAF PÅ MÖTET 21/12, TESTA STORLEK PÅ ALLOKERINGEN FUNKAR EJ ALLTID 
+//PGA ALLIGNMENT
+
+/*void test_allocate_array_size_single() {
+  char *string = "Test";
+  void *object = allocate_array(1, sizeof(string), NULL);
+  CU_ASSERT_TRUE(sizeof(object) == sizeof(string));
 }
-*/
+
+void test_allocate_array_size_multiple() {
+  void *object1 = allocate_array(2, sizeof(2), NULL);
+  CU_ASSERT_TRUE(sizeof(object1) == 2 * sizeof(2));
+  }*/
+
+void test_allocate_array_use_correct() {
+  char *object = allocate_array(2, sizeof(int), NULL);
+  object[0] = 2;
+  object[1] = 10;
+  CU_ASSERT_TRUE(object[0] == 2);
+  CU_ASSERT_TRUE(object[1] == 10);
+}
+
+void test_allocate_array_refcount() {
+  char *string = "Test";
+  void *object = allocate_array(1, sizeof(string), NULL);
+  header_t *header = allocate_header(object);
+  CU_ASSERT_TRUE(header->ref_count == 0)
+}
+
+void test_allocate_array_no_destructor() {
+  char *string = "Test";
+  void *object = allocate_array(1, sizeof(string), NULL);
+  header_t *header = allocate_header(object);
+  CU_ASSERT_FALSE(header->destructor != NULL)
+}
+
+void test_allocate_array_destructor() {
+  char *string = "Test";
+  void *object = allocate_array(1, sizeof(string), test_destructor);
+  header_t *header = allocate_header(object);
+  CU_ASSERT_TRUE(header->destructor != NULL)
+}
 
 
-//////////////////////////////TEST REF COUNT//////////////////////////////////
+
+//////////////////////////////TEST REF_COUNT//////////////////////////////////
 void test_rc_before_first_retain() {
   char *string = "Test";
   void *object = allocate(sizeof(string), NULL);
@@ -110,15 +150,6 @@ void test_rc_release_rc0() {
   CU_ASSERT_TRUE(i == 1);
 }
 
-/////////////////////////////TEST DEALLOCATE//////////////////////////////////
-
-void test_deallocate_not_valid_rc() {
-  char *string = "Test";
-  void *object = allocate(sizeof(string), NULL);
-
-
-}
-
 
 int main(void)
 {
@@ -127,13 +158,28 @@ int main(void)
 
   // Set up suites and tests
   CU_pSuite allocate = CU_add_suite("Testing allocate functions", NULL, NULL);
-  CU_add_test(allocate, "Allocate an object", test_allocate_size);
+  //CU_add_test(allocate, "Allocate an object", test_allocate_size);
   CU_add_test(allocate, "Use the allocated memory correct",
               test_allocate_use_correct);
-  CU_add_test(allocate, "Check that the ref_count is initialized to 0", test_allocate_refcount);
+  CU_add_test(allocate, "Check that the ref_count is initialized to 0",
+              test_allocate_refcount);
   CU_add_test(allocate, "Without destructor", test_allocate_no_destructor);
   CU_add_test(allocate, "With destructor", test_allocate_destructor);
 
+  // CU_add_test(allocate, "Allocate an array with a single element",
+  //            test_allocate_array_size_single);
+  //CU_add_test(allocate, "Allocate an array with multiple elements",
+  //            test_allocate_array_size_multiple);
+  CU_add_test(allocate, "Use the allocated memory correct",
+              test_allocate_array_use_correct);
+  CU_add_test(allocate, "Check that the ref_count is initialized to 0",
+              test_allocate_refcount);
+  CU_add_test(allocate, "Without destructor",
+              test_allocate_array_no_destructor);
+  CU_add_test(allocate, "With destructor",
+              test_allocate_array_destructor);
+
+  
   CU_pSuite rc = CU_add_suite("Testing ref_count functions", NULL, NULL);
   CU_add_test(rc, "Check if the ref_count is correct",
               test_rc_before_first_retain);
@@ -142,10 +188,6 @@ int main(void)
   CU_add_test(rc, "Check if the ref_count is correct after using release()",
               test_rc_release);
 
-  CU_pSuite free = CU_add_suite("Testing functions related to freeing memory",
-                                NULL, NULL);
-  CU_add_test(free, "Not free the object if the rc isn't 0",
-              test_deallocate_not_valid_rc);
   // Actually run tests
   CU_basic_run_tests();
 

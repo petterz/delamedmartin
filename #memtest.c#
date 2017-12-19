@@ -1,0 +1,38 @@
+#include <CUnit/CUnit.h>
+#include <CUnit/Basic.h>
+#include <CUnit/Automated.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "common_ref.h"
+#include "refmem.h"
+
+/////////////////////////////TEST DEALLOCATE//////////////////////////////////
+
+void test_deallocate_not_valid_rc() {
+  char *string = "Test";
+  void *object = allocate(sizeof(string), NULL);
+  retain(object);
+  
+  deallocate(object);
+
+}
+
+
+int main(void)
+{
+  // Initialise
+  CU_initialize_registry();
+
+  // Set up suites and tests
+  CU_pSuite free = CU_add_suite("Testing functions related to freeing memory",
+                                NULL, NULL);
+  CU_add_test(free, "Not free the object if the rc isn't 0",
+              test_deallocate_not_valid_rc);
+  // Actually run tests
+  CU_basic_run_tests();
+
+  // Tear down
+  CU_cleanup_registry();
+  return CU_get_error();
+}
